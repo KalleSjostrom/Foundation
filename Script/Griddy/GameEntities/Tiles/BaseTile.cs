@@ -14,8 +14,8 @@ namespace Foundation {
 		private Dictionary<Layer, BaseUnit> _occupyingUnits;
 		private List<BaseUnit> _previousUnits;
 	
-		public override void Init(GridManager gridManager) {
-			base.Init(gridManager);
+		public override void Init()
+		{
 			_occupyingUnits = new Dictionary<Layer, BaseUnit>();
 			_previousUnits = new List<BaseUnit>();
 		}
@@ -84,7 +84,7 @@ namespace Foundation {
 		
 		public virtual bool CanWalkOn(BaseUnit unit) {
 			foreach (BaseUnit u in OccupyingUnits(unit)) {
-				if (u != unit && !u.CanWalkOn(unit.gameObject.tag))
+				if (u != unit && !u.CanWalkOn(unit))
 					return false;
 			}
 			return true;

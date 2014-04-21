@@ -5,7 +5,7 @@ using UnityEngine;
 using System.Collections.Generic;
 
 namespace Foundation {
-	public class PathFinder
+	public class PathFinder<T> where T : BaseTile
 	{
 		private static Vector2[] DIRECTIONS = { Vector2.up, -Vector2.up, Vector2.right, -Vector2.right };
 	
@@ -13,16 +13,17 @@ namespace Foundation {
 		private HashSet<int> _closedSet = new HashSet<int>();
 	
 		private List<BaseTile> _tilesForQueries;
-		private GridManager _gridManager;
+		private GridManager<T> _gridManager;
 	
-		public PathFinder(GridManager gridManager) {
+		public PathFinder(GridManager<T> gridManager) 
+		{
 			_gridManager = gridManager;
 		}
 	
 		public Vector2[] GetPathTo(Vector3 startPosition, Vector3 endPosition, BaseUnit unit, out int cost)
 		{
-			Vector2 startIndices = _gridManager.PositionToIndices(startPosition);
-			Vector2 endIndices = _gridManager.PositionToIndices(endPosition);
+			Vector2 startIndices = GridAux.PositionToIndices(startPosition);
+			Vector2 endIndices = GridAux.PositionToIndices(endPosition);
 	
 			Node n = GoTo(startIndices, endIndices, unit);
 			cost = n.GetTotalCost();

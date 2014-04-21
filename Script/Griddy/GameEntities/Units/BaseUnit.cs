@@ -7,11 +7,10 @@ using System.IO;
 namespace Foundation {
 	public abstract class BaseUnit : BaseEntity
 	{
-	    public abstract bool CanWalkOver { get; }
 		public abstract int LayerMask { get; }
 		public BaseTile OccupiedTile { get; set; }
 	
-	    public abstract bool CanWalkOn(string incomingUnitTag); // Returns the CanWalkOver bool
+	    public abstract bool CanWalkOn(BaseUnit unit); // Returns the CanWalkOver bool
 	
 		public virtual void OnLeaved(BaseTile tile) {}
 		public virtual void OnCollided(BaseUnit unit) {}
