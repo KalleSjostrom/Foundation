@@ -15,12 +15,18 @@ namespace Foundation {
 		public static void PositionToIndices(Vector3 position, out int xIndex, out int yIndex) 
 		{
 			xIndex = Mathf.RoundToInt(position.x);
+#if Z_UP
+			yIndex = Mathf.RoundToInt(position.y);
+#else
 			yIndex = Mathf.RoundToInt(position.z);
+#endif
 		}
 		
 		public static Vector2 PositionToIndices(Vector3 position)
 		{
-			return new Vector2(Mathf.RoundToInt(position.x), Mathf.RoundToInt(position.z));
+			int x, y;
+			GridAux.PositionToIndices(position, out x, out y);
+			return new Vector2(x, y);
 		}
 	}
 	public class GridManager<T> where T : BaseTile
@@ -40,6 +46,7 @@ namespace Foundation {
 		public void AddTile(T tile) {
 			int x, y;
 			GridAux.PositionToIndices(tile.transform.position, out x, out y);
+			Log.Assert(InRange(x, y), "GridManager", "Can't add tile outside of grid! (x={0}, y={1}, size x={2}, size y={3})", x, y, _grid.GetLength(0), _grid.GetLength(1));
 			_grid[x, y] = tile;
 		}
 		public void RemoveTile(T tile) {
@@ -57,22 +64,6 @@ namespace Foundation {
 		{
 			return xIndex < _grid.GetLength(0) && xIndex >= 0 &&
 				   yIndex < _grid.GetLength(1) && yIndex >= 0;
-		}
-		
-		public int GetAddress(Vector3 position)
-		{
-			int x, y;
-			GridAux.PositionToIndices(position, out x, out y);
-			if (GetTile(x, y) == null)
-				return -1;
-				
-			return x + y * _grid.GetLength(0);
-		}
-		public int GetAddress(T tile)
-		{
-			int x, y;
-			GridAux.PositionToIndices(tile.transform.position, out x, out y);
-			return x + y * _grid.GetLength(0);
 		}
 		
 		public T GetTile(int address) 

@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 
 namespace Foundation {
-	public interface BaseState 
+	public interface IState 
 	{
 		void OnEnter(params object[] args);
 		void Update();
@@ -12,12 +12,14 @@ namespace Foundation {
 	
 	public class StateMachine {
 	
-		private BaseState _currentState;
-		private Dictionary<int, BaseState> _allStates;
+		private IState _currentState;
+		private Dictionary<int, IState> _allStates;
+		
+		public IState CurrentState { get { return _currentState; } }
 		
 		public StateMachine() {}
 		
-		public void Setup(int startState, Dictionary<int, BaseState> allStates)
+		public void Setup(int startState, Dictionary<int, IState> allStates)
 		{
 			_currentState = allStates[startState];
 			_currentState.OnEnter();
@@ -26,10 +28,10 @@ namespace Foundation {
 	
 		public void ChangeState(int newState, params object[] args)
 		{
-			BaseState previous = _currentState;
+			IState previous = _currentState;
 			previous.OnExit();
 			
-			BaseState next = _allStates[newState];
+			IState next = _allStates[newState];
 			next.OnEnter(args);
 			
 			_currentState = next;
