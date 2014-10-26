@@ -16,11 +16,13 @@ namespace Foundation {
 	
 		public override void Init()
 		{
+			base.Init();
 			_occupyingUnits = new Dictionary<Layer, BaseUnit>();
 			_previousUnits = new List<BaseUnit>();
 		}
 		
-		public static void TeleportTo(BaseUnit unit, BaseTile sourceTile, BaseTile destinationTile) {
+		public static void TeleportTo(BaseUnit unit, BaseTile sourceTile, BaseTile destinationTile) 
+		{
 			Vector3 position = destinationTile.transform.position;
 			position.y = unit.transform.position.y;
 			unit.transform.position = position;
@@ -28,24 +30,31 @@ namespace Foundation {
 			HandleOccupy(unit, sourceTile, destinationTile);
 			HandleArrive(unit, sourceTile, destinationTile);
 		}
-		public static void HandleOccupy(BaseUnit unit, BaseTile sourceTile, BaseTile destinationTile) {
+		
+		public static void HandleOccupy(BaseUnit unit, BaseTile sourceTile, BaseTile destinationTile) 
+		{
 			if (sourceTile != null)
 				sourceTile.Unoccupy(unit);
 			if (destinationTile != null)
 				destinationTile.Occupy(unit);
 		}
-		public static void HandleArrive(BaseUnit unit, BaseTile sourceTile, BaseTile destinationTile) {
+		
+		public static void HandleArrive(BaseUnit unit, BaseTile sourceTile, BaseTile destinationTile) 
+		{
 			if (sourceTile != null)
 				sourceTile.Leave(unit, destinationTile);
 			if (destinationTile != null)
 				destinationTile.Arrive(unit, sourceTile);
 		}
 	
-		private void Occupy(BaseUnit unit) {
+		private void Occupy(BaseUnit unit) 
+		{
 			int mask = unit.LayerMask;
-			foreach (Layer l in Enum.GetValues(typeof(Layer))) {
+			foreach (Layer l in Enum.GetValues(typeof(Layer))) 
+			{
 				int layerMask = (int)l;
-				if ((layerMask & mask) == layerMask) {
+				if ((layerMask & mask) == layerMask) 
+				{
 					BaseUnit u;
 					if (_occupyingUnits.TryGetValue(l, out u))
 						_previousUnits.Add(u);
@@ -56,11 +65,14 @@ namespace Foundation {
 			unit.OccupiedTile = this;
 		}
 	
-		private void Unoccupy(BaseUnit unit) {
+		private void Unoccupy(BaseUnit unit) 
+		{
 			int mask = unit.LayerMask;
-			foreach (Layer l in Enum.GetValues(typeof(Layer))) {
+			foreach (Layer l in Enum.GetValues(typeof(Layer))) 
+			{
 				BaseUnit u;
-				if (_occupyingUnits.TryGetValue(l, out u)) {
+				if (_occupyingUnits.TryGetValue(l, out u)) 
+				{
 					int layerMask = (int)l;
 					if ((layerMask & mask) == layerMask && unit == u)
 						_occupyingUnits.Remove(l);
@@ -82,14 +94,18 @@ namespace Foundation {
 			OnLeaved(unit, destinationTile);
 		}
 		
-		public virtual bool CanWalkOn(BaseUnit unit) {
-			foreach (BaseUnit u in OccupyingUnits(unit)) {
+		public virtual bool CanWalkOn(BaseUnit unit) 
+		{
+			foreach (BaseUnit u in OccupyingUnits(unit)) 
+			{
 				if (u != unit && !u.CanWalkOn(unit))
 					return false;
 			}
 			return true;
 		}
-		public BaseUnit GetOccupyingUnitOnLayer(Layer iLayer) {
+		
+		public BaseUnit GetOccupyingUnitOnLayer(Layer iLayer) 
+		{
 			BaseUnit unit;
 			_occupyingUnits.TryGetValue(iLayer, out unit);
 			return unit;

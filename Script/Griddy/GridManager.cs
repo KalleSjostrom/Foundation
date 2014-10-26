@@ -5,11 +5,28 @@ using System;
 
 namespace Foundation {
 	public class GridAux {
+		private static int MAX_SIZE = 2^16;
 		public static int PositionToId(Vector3 position) 
 		{
 			int x, y;
 			PositionToIndices(position, out x, out y);
-			return x + y * 2^16;
+			return x + y * MAX_SIZE;
+		}
+
+		public static object IdToPosition(int id)
+		{
+			int x = id % MAX_SIZE;
+			int y = id / MAX_SIZE;
+#if Z_UP
+			return new Vector3(x, y, 0);
+#else
+			return new Vector3(x, 0, y);
+#endif
+		}
+
+		public static int IndicesToId(int x, int y) 
+		{
+			return x + y * MAX_SIZE;
 		}
 		
 		public static void PositionToIndices(Vector3 position, out int xIndex, out int yIndex) 
@@ -31,71 +48,58 @@ namespace Foundation {
 	}
 	public class GridManager<T> where T : BaseTile
 	{
-		private T[,] _grid;
+		private Dictionary<int, T> _grid;
 		private List<T> _tilesForQueries;
-		private Iterator _iterator;
 	
 		public GridManager() {}
 	
-		public void CreateGrid(int sizeX, int sizeY)
+		public void CreateGrid(Bounds levelBounds)
 		{
-			_grid = new T[sizeX, sizeY];
-			_tilesForQueries = new List<T>(sizeX * sizeY);
+			Vector3 size = levelBounds.size;
+			int x, y;
+			GridAux.PositionToIndices(size, out x, out y);
+			x++; y++;
+			_grid = new Dictionary<int, T>();
+			_tilesForQueries = new List<T>(x * y);
 		}
 		
-		public void AddTile(T tile) {
-			int x, y;
-			GridAux.PositionToIndices(tile.transform.position, out x, out y);
-			Log.Assert(InRange(x, y), "GridManager", "Can't add tile outside of grid! (x={0}, y={1}, size x={2}, size y={3})", x, y, _grid.GetLength(0), _grid.GetLength(1));
-			_grid[x, y] = tile;
+		public void AddTile(T tile) 
+		{
+			int id = GridAux.PositionToId(tile.transform.position);
+			Log.Assert(!_grid.ContainsKey(id), "GridManager", "Can't add two tiles to same place! (tile={0}, position={1})", tile, tile.transform.position);
+			_grid.Add(id, tile);
 		}
-		public void RemoveTile(T tile) {
-			int x, y;
-			GridAux.PositionToIndices(tile.transform.position, out x, out y);
-			_grid[x, y] = null;
+		public void RemoveTile(T tile) 
+		{
+			int id = GridAux.PositionToId(tile.transform.position);
+			Log.Assert(_grid.ContainsKey(id), "GridManager", "Couldn't find tile to remove! (tile={0}, position={1})", tile, tile.transform.position);
+			_grid.Remove(id);
 		}
 	
-		public bool InRange(Vector3 position) {
-			int x, y;
-			GridAux.PositionToIndices(position, out x, out y);
-			return InRange(x, y);
-		}
-		public bool InRange(int xIndex, int yIndex) 
+		public T GetTile(int id) 
 		{
-			return xIndex < _grid.GetLength(0) && xIndex >= 0 &&
-				   yIndex < _grid.GetLength(1) && yIndex >= 0;
+			Log.Assert(_grid.ContainsKey(id), "GridManager", "Couldn't find tile! (id={0}, position={1})", id, GridAux.IdToPosition(id));
+			return _grid[id];
 		}
-		
-		public T GetTile(int address) 
-		{
-			Log.Assert(_grid.GetLength(0) > 0, "GridManager", "Can't get tile of a zero-sized grid!");
-			int x = address % _grid.GetLength(0);
-			int y = address / _grid.GetLength(0);
-			return GetTile(x, y);
-		}
-	
 		public T GetTile(Vector3 position)
 		{
-			int x, y;
-			GridAux.PositionToIndices(position, out x, out y);
-			return GetTile(x, y);
-		}
-		public T GetTile(int xIndex, int yIndex)
-		{
-			if (InRange(xIndex, yIndex))
-				return _grid[xIndex, yIndex];
-	
-			return null;
-		}
-	
-		protected void RemoveTile(int xIndex, int yIndex)
-		{
-			_grid[xIndex, yIndex] = default(T);
+			return GetTile(GridAux.PositionToId(position));
 		}
 		
-		public int GetLength(int dimension)
+		public T TryGetTile(int id)
 		{
-			return _grid.GetLength(dimension);
+			T tile;
+			if (_grid.TryGetValue(id, out tile))
+				return tile;
+			else
+				return default(T);
+		}
+		public T TryGetTile(Vector3 position) {
+			return TryGetTile(GridAux.PositionToId(position));
+		}
+		public T TryGetTile(int x, int y)
+		{
+			return TryGetTile(GridAux.IndicesToId(x, y));
 		}
 		
 		public IEnumerable<T> GetTilesAround(Vector3 position)
@@ -103,16 +107,16 @@ namespace Foundation {
 			int x, y;
 			GridAux.PositionToIndices(position, out x, out y);
 			
-			T t = GetTile(x, y);
+			T t = TryGetTile(x, y);
 			if (t) yield return t;
 			
-			t = GetTile(x-1, y);
+			t = TryGetTile(x-1, y);
 			if (t) yield return t;
 			
-			t = GetTile(x, y-1);
+			t = TryGetTile(x, y-1);
 			if (t) yield return t;
 			
-			t = GetTile(x-1, y-1);
+			t = TryGetTile(x-1, y-1);
 			if (t) yield return t;
 		}
 		
@@ -138,75 +142,24 @@ namespace Foundation {
 			return areNeighbors;
 		}
 		
+		public IEnumerable<T> AllTiles() 
+		{
+			foreach (var pair in _grid)
+			{
+				yield return pair.Value;
+			}
+		}
+		
 		public void GetAll<T2>(out List<T> tiles) where T2 : T
 		{
 			_tilesForQueries.Clear();
-			
-			Iterator it = GetIterator();
-			while (it.HasNext())
+			foreach (var pair in _grid)
 			{
-				T t = it.Next();
-				if (t != null && t is T2)
-				{
-					_tilesForQueries.Add(t);	
-				}
+				T tile = pair.Value;
+				if (tile is T2)
+					_tilesForQueries.Add(tile);
 			}
-			
 			tiles = _tilesForQueries;
-		}
-	
-		public Iterator GetIterator()
-		{
-			if (_iterator == null)
-			{
-				_iterator = new Iterator();
-				_iterator.Initialize(_grid);
-			}
-			
-			_iterator.Reset();
-			return _iterator;
-		}
-		
-		public class Iterator
-		{
-			private int _cursorX = 0;
-			private int _cursorY = 0;
-			
-			private int _sizeX;
-			private int _sizeY;
-			
-			private T[,] _grid;
-			
-			public void Initialize(T[,] grid)
-			{
-				_grid = grid;
-				_sizeX = _grid.GetLength(0);
-				_sizeY = _grid.GetLength(1);
-			}
-			
-			public void Reset()
-			{
-				_cursorX = 0;
-				_cursorY = 0;
-			}
-			
-			public T Next()
-			{
-				_cursorX++;
-				if (_cursorX >= _sizeX)
-				{
-					_cursorX = 0;
-					_cursorY++;
-					if (_cursorY >= _sizeY)
-						return default(T);
-				}
-				return _grid[_cursorX, _cursorY];
-			}
-			
-			public bool HasNext()
-			{
-				return _cursorY < _grid.GetLength(1);
-			}
 		}
 	}
 }

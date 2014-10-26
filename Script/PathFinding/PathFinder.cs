@@ -123,7 +123,7 @@ namespace Foundation {
 	
 			if (!_closedSet.Contains(address))
 			{
-				BaseTile t = _gridManager.GetTile((int)indices.x, (int)indices.y);
+				BaseTile t = _gridManager.GetTile(address);
 				if (t != null && t.CanWalkOn(unit)) 
 				{
 					int cost = (parent == null ? 0 : parent.Cost) + 1; // TODO: Add different costs for different tiles
