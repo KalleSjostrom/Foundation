@@ -3,42 +3,39 @@ using System.Collections;
 using System.Collections.Generic;
 
 namespace Foundation {
-	public interface IState 
+
+	[System.Serializable]
+	public class StateDictionary : Dict<int, IState>{}
+	
+	public abstract class IState : ScriptableObject
 	{
-		void OnEnter(params object[] args);
-		void Update();
-		void OnExit();
+		public abstract void OnEnter(params object[] args);
+		public abstract void Update();
+		public abstract void OnExit();
 	}
-	
+
+	[System.Serializable]
 	public class StateMachine {
-	
 		private IState _currentState;
-		private Dictionary<int, IState> _allStates;
-		
+		[SerializeField]
+		private StateDictionary _allStates;
 		public IState CurrentState { get { return _currentState; } }
 		
-		public StateMachine() {}
-		
-		public void Setup(int startState, Dictionary<int, IState> allStates)
-		{
+		public void Setup(int startState, StateDictionary allStates) {
 			_currentState = allStates[startState];
 			_currentState.OnEnter();
 			_allStates = allStates;
 		}
 	
-		public void ChangeState(int newState, params object[] args)
-		{
+		public void ChangeState(int newState, params object[] args) {
 			IState previous = _currentState;
 			previous.OnExit();
-			
 			IState next = _allStates[newState];
 			next.OnEnter(args);
-			
 			_currentState = next;
 		}
 		
-		public void Update()
-		{
+		public void Update() {
 			_currentState.Update();
 		}
 	}
