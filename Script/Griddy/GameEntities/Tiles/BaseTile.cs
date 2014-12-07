@@ -9,14 +9,14 @@ namespace Foundation {
 		Air = 1 << 1,
 	}
 	
-	public abstract class BaseTile : BaseEntity
+	public abstract class BaseTile : MonoBehaviour
 	{
+		public int Id { get { return GridAux.PositionToId(transform.position); } }
 		private Dictionary<Layer, BaseUnit> _occupyingUnits;
 		private List<BaseUnit> _previousUnits;
 	
-		public override void Init()
+		public virtual void Init()
 		{
-			base.Init();
 			_occupyingUnits = new Dictionary<Layer, BaseUnit>();
 			_previousUnits = new List<BaseUnit>();
 		}

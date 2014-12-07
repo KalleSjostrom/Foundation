@@ -19,6 +19,15 @@ namespace Foundation {
 		{
 			_gridManager = gridManager;
 		}
+		
+		public int GetCostTo(Vector3 startPosition, Vector3 endPosition, BaseUnit unit) {
+			Vector2 startIndices = GridAux.PositionToIndices(startPosition);
+			Vector2 endIndices = GridAux.PositionToIndices(endPosition);
+			
+			Node n = GoTo(startIndices, endIndices, unit);
+			int cost = n.GetTotalCost();
+			return cost;
+		}
 	
 		public Vector2[] GetPathTo(Vector3 startPosition, Vector3 endPosition, BaseUnit unit, out int cost)
 		{

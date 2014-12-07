@@ -46,7 +46,7 @@ namespace Foundation {
 			return new Vector2(x, y);
 		}
 	}
-	public class GridManager<T> where T : BaseTile
+	public class GridManager<T> where T : MonoBehaviour
 	{
 		private Dictionary<int, T> _grid;
 		private List<T> _tilesForQueries;

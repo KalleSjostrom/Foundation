@@ -4,11 +4,21 @@ using System.Collections.Generic;
 
 namespace Foundation {
 
+	public class StateAux {
+		public static void AddState<T>(StateDictionary states, int state, params object[] args) where T : IState {
+			T instance = ScriptableObject.CreateInstance<T>();
+			instance.Initialize(args);
+			states.Add(state, instance);
+		}
+	}
+
 	[System.Serializable]
 	public class StateDictionary : Dict<int, IState>{}
 	
 	public abstract class IState : ScriptableObject
 	{
+		public abstract void Initialize(params object[] args);
+		
 		public abstract void OnEnter(params object[] args);
 		public abstract void Update();
 		public abstract void OnExit();

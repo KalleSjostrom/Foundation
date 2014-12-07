@@ -18,12 +18,6 @@ namespace Foundation {
 			return go.GetComponent<T>();
 		}
 		
-		public static T CreateAndAdd<T>(String name) where T : UnityEngine.Component
-		{
-			GameObject go = new GameObject(name, typeof(T));
-			return go.AddComponent<T>();
-		}
-		
 		public static T CreateAndAdd<T>(String name, GameObject parent) where T : UnityEngine.Component
 		{
 			GameObject go = new GameObject(name, typeof(T));

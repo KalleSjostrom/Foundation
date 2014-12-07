@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.IO;
 
 namespace Foundation {
-	public abstract class BaseUnit : BaseEntity
+	public abstract class BaseUnit : MonoBehaviour
 	{
 		public abstract int LayerMask { get; }
 		public BaseTile OccupiedTile { get; set; }
@@ -20,15 +20,6 @@ namespace Foundation {
 		public virtual void DestroyUnit() {
 			BaseTile.HandleOccupy(this, OccupiedTile, null); // Need to leave the grid before destroying!
 			Destroy(gameObject);
-		}
-	
-		protected override void OnActivated() {
-			if (OccupiedTile.CanWalkOn(this)) {
-				BaseTile.HandleOccupy(this, null, OccupiedTile);
-			}
-		}
-		protected override void OnDeactivated() {
-			BaseTile.HandleOccupy(this, OccupiedTile, null);
 		}
 	}
 }

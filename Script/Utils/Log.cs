@@ -1,5 +1,6 @@
 using System.Collections;
 using System;
+using UnityEngine;
 
 namespace Foundation {
 	public static class Log
@@ -30,6 +31,12 @@ namespace Foundation {
 		public static void Assert(bool condition, string category, string format, params object[] args)
 		{
 			if (!condition) throw new Exception(Log.format(category, format, args));
+		}
+		
+		public static void ScreenText(string text) {
+			GameObject go = GameObject.FindGameObjectWithTag("DebugHud");
+			DebugScreenText dtd = go.GetComponent<DebugScreenText>();
+			dtd.ScreenText(text);
 		}
 	}
 }
