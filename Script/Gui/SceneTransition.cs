@@ -34,7 +34,7 @@ namespace Foundation {
 		}
 		public void NextScene(int nextLevel) 
 		{
-			Log.Assert(_asyncOp == null, "SceneTransition", "Scene transition already in progress!");
+			Log.Assert(_asyncOp == null, "Scene transition already in progress!");
 			Log.Debug("SceneTransition", "Set next level {0}", nextLevel);
 	
 	#if USE_UNITY_PRO

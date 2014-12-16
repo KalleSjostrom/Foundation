@@ -38,11 +38,12 @@ namespace Foundation {
 		}
 	
 		public void ChangeState(int newState, params object[] args) {
+			Log.Debug("StateMachine", "Changing State (from={0}, to={1})", _currentState, _allStates[newState]);
 			IState previous = _currentState;
 			previous.OnExit();
 			IState next = _allStates[newState];
-			next.OnEnter(args);
 			_currentState = next;
+			next.OnEnter(args);
 		}
 		
 		public void Update() {

@@ -11,6 +11,7 @@ namespace Foundation {
 		private List<TValue> _values;
 		private Dictionary<TKey, TValue>  _dictionary;
 		
+		public Dictionary<TKey, TValue>.ValueCollection Values { get { return _dictionary.Values; } }
 		public TValue this[TKey key]
 		{
 			get { return _dictionary[key]; }
@@ -31,10 +32,13 @@ namespace Foundation {
 				yield return pair;
 		}
 		
-		/*IEnumerator IEnumerable.GetEnumerator()
-		{
-			return _dictionary.GetEnumerator();
-		}*/
+		public bool ContainsKey(TKey key) {
+			return _dictionary.ContainsKey(key);
+		}
+		
+		public bool Remove(TKey key) {
+			return _dictionary.Remove(key);
+		}
 		
 		public void OnBeforeSerialize() {
 			_keys.Clear();

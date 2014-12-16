@@ -9,7 +9,7 @@ namespace Foundation {
 			
 		void Start() 
 		{
-			Log.Assert(tracks.Count > 0, "AudioPlayerAdvanced", "There is no tracks specified!");
+			Log.Assert(tracks.Count > 0, "There is no tracks specified!");
 			
 			foreach (TrackInfo info in tracks) {
 				AudioTrack track = ComponentAux.Instansiate<AudioTrack>(info.audioTrackPrefab.gameObject, this.gameObject);
@@ -58,7 +58,7 @@ namespace Foundation {
 					return info;
 				}
 			}
-			Log.Assert(false, "AudioPlayerAdvanced", "Found no track to play!?");
+			Log.Assert(false, "Found no track to play!?");
 			return null;
 		}
 		

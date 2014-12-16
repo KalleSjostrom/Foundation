@@ -1,79 +1,71 @@
-#define FOUNDATION_DEBUG_PATHFINDER
+// #define FOUNDATION_DEBUG_PATHFINDER
 
 using System;
 using UnityEngine;
 using System.Collections.Generic;
 
 namespace Foundation {
-	public class PathFinder<T> where T : BaseTile
+	[Serializable]
+	public class PathFinder
 	{
-		private static Vector2[] DIRECTIONS = { Vector2.up, -Vector2.up, Vector2.right, -Vector2.right };
+		private static Vector3[] DIRECTIONS = { new Vector3(1,0,0), new Vector3(-1,0,0), new Vector3(0,1,0), new Vector3(0,-1,0) };
 	
 		private IPriorityQueue<Node> _priorityQueue;
-		private HashSet<int> _closedSet = new HashSet<int>();
+		private HashSet<long> _closedSet = new HashSet<long>();
+		private GridManager _gridTiles;
 	
-		private List<BaseTile> _tilesForQueries;
-		private GridManager<T> _gridManager;
-	
-		public PathFinder(GridManager<T> gridManager) 
+		public PathFinder(GridManager gridTiles) 
 		{
-			_gridManager = gridManager;
+			_gridTiles = gridTiles;
 		}
 		
-		public int GetCostTo(Vector3 startPosition, Vector3 endPosition, BaseUnit unit) {
-			Vector2 startIndices = GridAux.PositionToIndices(startPosition);
-			Vector2 endIndices = GridAux.PositionToIndices(endPosition);
-			
-			Node n = GoTo(startIndices, endIndices, unit);
+		public int GetCostTo(Vector3 startPosition, Vector3 endPosition, BaseSoldier unit) {
+			Node n = GoTo(startPosition, endPosition, unit);
 			int cost = n.GetTotalCost();
 			return cost;
 		}
 	
-		public Vector2[] GetPathTo(Vector3 startPosition, Vector3 endPosition, BaseUnit unit, out int cost)
+		public Vector2[] GetPathTo(Vector3 startPosition, Vector3 endPosition, BaseSoldier unit, out int cost)
 		{
-			Vector2 startIndices = GridAux.PositionToIndices(startPosition);
-			Vector2 endIndices = GridAux.PositionToIndices(endPosition);
-	
-			Node n = GoTo(startIndices, endIndices, unit);
+			Node n = GoTo(startPosition, endPosition, unit);
 			cost = n.GetTotalCost();
 	
-			bool foundTarget = n.Indices == endIndices;
+			bool foundTarget = n.Position == endPosition;
 			if (!foundTarget) 
 				return null;
 			
-			List<Vector2> indices = new List<Vector2>();
+			List<Node> nodes = new List<Node>();
 			Node node = n; // Starts at the target and backtrace through parents back to beginning.
 			while (node != null)
 			{
-				indices.Add(node.Indices);
+				nodes.Add(node);
 				node = node.Parent;
 			}
 	
 			// Construct a path where each entry is one move in some direction.
-			Vector2[] path = new Vector2[indices.Count-1];
+			Vector2[] path = new Vector2[nodes.Count-1];
 			int counter = 0;
-			for (int i = indices.Count-1; i > 0; i--) {
-				path[counter] = indices[i-1] - indices[i]; // The direction is the difference in indices.
+			for (int i = nodes.Count-1; i > 0; i--) {
+				path[counter] = nodes[i-1].Position - nodes[i].Position; // The direction is the difference in .
 				counter++;
 			}
 	
 			return path;
 		}
 	
-		// Converts indices in the grid to a uniqe number
-		private int GetAddress(Vector2 indices) {
-			int x = (int)indices.x * 1000; // Implies that we cant have rows/columns with more than 1000 tiles.
-			int y = (int)indices.y;
-			return x + y;
+		// Converts position in the grid to a uniqe number
+		private long GetAddress(Vector3 position) {
+			return ((long)position.x) << 32 | ((long)position.y);
 		}
 		
-		private Node GoTo(Vector2 start, Vector2 target, BaseUnit unit)
+		private Node GoTo(Vector3 start, Vector3 target, BaseSoldier unit)
 		{
 #if (FOUNDATION_DEBUG_PATHFINDER)
 			Log.Debug("PathFinder", "Go to (start={0}, target={1})", start, target);
 #endif
 			int h1 = GetManhattanDistance(start, target);
 			
+			_closedSet = new HashSet<long>();
 			_priorityQueue = new BinaryHeap<Node>(25);
 			_priorityQueue.Enqueue(new Node(start, null, 0, h1));
 			
@@ -104,48 +96,46 @@ namespace Foundation {
 			return (int) Mathf.Abs(a.x - b.x) + (int) Mathf.Abs(a.y - b.y);
 		}
 		
-		private void Expand(Node parent, ref Vector2 target, BaseUnit unit)
+		private void Expand(Node parent, ref Vector3 target, BaseSoldier unit)
 		{
-			Vector2 currentIndices = parent.Indices;
 #if (FOUNDATION_DEBUG_PATHFINDER)
-			Log.Debug("PathFinder", "expand node at indices {0}", currentIndices);
+			Log.Debug("PathFinder", "Expand node at position={0}", parent.Position);
 #endif
 			
-			bool okToAdd = _closedSet.Add(GetAddress(currentIndices));
+			bool okToAdd = _closedSet.Add(GetAddress(parent.Position));
 			
 			if (!okToAdd) 
 				return;
 			
-			for (Direction i = Direction.Up; i <= Direction.Left; i++) 
-			{ 
-				Vector2 nextNodeIndices = currentIndices + DIRECTIONS[(int)i];
-				AddNode(nextNodeIndices, target, parent, unit);
+			for (int i = 0; i < 4; ++i) {
+				Vector3 position = parent.Position + DIRECTIONS[i];
+				AddNode(position, target, parent, unit);
 			}
 		}
 		
-		private void AddNode(Vector2 indices, Vector2 target, Node parent, BaseUnit unit) 
+		private void AddNode(Vector3 position, Vector3 target, Node parent, BaseSoldier unit) 
 		{
-			int address = GetAddress(indices);
+			long address = GetAddress(position);
 #if (FOUNDATION_DEBUG_PATHFINDER)
-			Log.Debug("PathFinder", "address={0}, indices={1}", address, indices);
+			Log.Debug("PathFinder", "address={0}, position={1}", address, position);
 #endif
 	
 			if (!_closedSet.Contains(address))
 			{
-				BaseTile t = _gridManager.GetTile(address);
-				if (t != null && t.CanWalkOn(unit)) 
+				BaseHexTile t = _gridTiles.TryGetTile(position) as BaseHexTile;
+				if (t != null && unit.CanWalkOn(t)) 
 				{
-					int cost = (parent == null ? 0 : parent.Cost) + 1; // TODO: Add different costs for different tiles
-					int heuristic = GetManhattanDistance(indices, target);
+					int cost = (parent == null ? 0 : parent.Cost) + t.GetCost(unit as BaseSoldier);
+					int heuristic = GetManhattanDistance(position, target);
 #if (FOUNDATION_DEBUG_PATHFINDER)
-					Log.Debug("PathFinder", "adding node. (indices={0}, heuristic={1}, cost={2})", indices, heuristic, cost);
+					Log.Debug("PathFinder", "adding node. (position={0}, heuristic={1}, cost={2})", position, heuristic, cost);
 #endif
 					
-					_priorityQueue.Enqueue(new Node(indices, parent, cost, heuristic));
+					_priorityQueue.Enqueue(new Node(position, parent, cost, heuristic));
 				} 
 				else 
 				{
-					_closedSet.Add(GetAddress(indices));
+					_closedSet.Add(GetAddress(position));
 				}
 			}
 		}

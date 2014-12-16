@@ -8,7 +8,7 @@ namespace Foundation {
 		private static string format(string category, string format, params object[] args)
 		{
 			string s = String.Format(format, args);
-			s = String.Format("[{0}] [{1}] {2}", DateTime.Now.ToString(), category, s);
+			s = String.Format("[{0}] [{1}] {2}", DateTime.Now.ToString("HH:mm:ss.fff"), category, s);
 			return s;
 		}
 		
@@ -28,9 +28,12 @@ namespace Foundation {
 			UnityEngine.Debug.LogWarning(Log.format(category, format, args));
 		}
 		
-		public static void Assert(bool condition, string category, string format, params object[] args)
+		public static void Assert(bool condition, string format, params object[] args)
 		{
-			if (!condition) throw new Exception(Log.format(category, format, args));
+			if (!condition) {
+				string s = String.Format(format, args);
+				throw new Exception(String.Format("[{0}] {1}", DateTime.Now.ToString("HH:mm:ss.fff"), s));
+			}
 		}
 		
 		public static void ScreenText(string text) {
