@@ -112,7 +112,7 @@ namespace Foundation {
 	
 			if (!_closedSet.Contains(address))
 			{
-				BaseHexTile t = _gridTiles.TryGetTile(position) as BaseHexTile;
+				BaseTile t = _gridTiles.TryGetTile(position) as BaseTile;
 				if (t != null && unit.CanWalkOn(t)) 
 				{
 					int cost = (parent == null ? 0 : parent.Cost) + t.GetCost(unit as BaseSoldier);
