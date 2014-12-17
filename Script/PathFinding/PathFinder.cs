@@ -115,7 +115,7 @@ namespace Foundation {
 				BaseTile t = _gridTiles.TryGetTile(position) as BaseTile;
 				if (t != null && unit.CanWalkOn(t)) 
 				{
-					int cost = (parent == null ? 0 : parent.Cost) + t.GetCost(unit as BaseSoldier);
+					int cost = (parent == null ? 0 : parent.Cost) + t.GetCost(unit);
 					int heuristic = GetManhattanDistance(position, target);
 #if (FOUNDATION_DEBUG_PATHFINDER)
 					Log.Debug("PathFinder", "adding node. (position={0}, heuristic={1}, cost={2})", position, heuristic, cost);
