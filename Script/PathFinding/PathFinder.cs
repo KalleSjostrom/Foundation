@@ -8,10 +8,10 @@ namespace Foundation {
 	[Serializable]
 	public class PathFinder
 	{
-		private static Vector3[] DIRECTIONS = { new Vector3(1,0,0), new Vector3(-1,0,0), new Vector3(0,1,0), new Vector3(0,-1,0) };
+		private static Vector3[] DIRECTIONS = { new Vector3(1, 0, 0), new Vector3(-1, 0, 0), new Vector3(0, 1, 0), new Vector3(0, -1, 0) };
 	
 		private IPriorityQueue<Node> _priorityQueue;
-		private HashSet<long> _closedSet = new HashSet<long>();
+		private HashSet<int> _closedSet = new HashSet<int>();
 		private GridManager _gridTiles;
 	
 		public PathFinder(GridManager gridTiles) 
@@ -52,11 +52,6 @@ namespace Foundation {
 	
 			return path;
 		}
-	
-		// Converts position in the grid to a uniqe number
-		private long GetAddress(Vector3 position) {
-			return ((long)position.x) << 32 | ((long)position.y);
-		}
 		
 		private Node GoTo(Vector3 start, Vector3 target, BaseSoldier unit)
 		{
@@ -65,7 +60,7 @@ namespace Foundation {
 #endif
 			int h1 = GetManhattanDistance(start, target);
 			
-			_closedSet = new HashSet<long>();
+			_closedSet = new HashSet<int>();
 			_priorityQueue = new BinaryHeap<Node>(25);
 			_priorityQueue.Enqueue(new Node(start, null, 0, h1));
 			
@@ -91,18 +86,13 @@ namespace Foundation {
 			return bestGuess;
 		}
 		
-		private static int GetManhattanDistance(Vector2 a, Vector2 b) 
-		{
-			return (int) Mathf.Abs(a.x - b.x) + (int) Mathf.Abs(a.y - b.y);
-		}
-		
 		private void Expand(Node parent, ref Vector3 target, BaseSoldier unit)
 		{
 #if (FOUNDATION_DEBUG_PATHFINDER)
 			Log.Debug("PathFinder", "Expand node at position={0}", parent.Position);
 #endif
 			
-			bool okToAdd = _closedSet.Add(GetAddress(parent.Position));
+			bool okToAdd = Close(parent);
 			
 			if (!okToAdd) 
 				return;
@@ -115,7 +105,7 @@ namespace Foundation {
 		
 		private void AddNode(Vector3 position, Vector3 target, Node parent, BaseSoldier unit) 
 		{
-			long address = GetAddress(position);
+			int address = GridAux.PositionToId(position);
 #if (FOUNDATION_DEBUG_PATHFINDER)
 			Log.Debug("PathFinder", "address={0}, position={1}", address, position);
 #endif
@@ -135,9 +125,20 @@ namespace Foundation {
 				} 
 				else 
 				{
-					_closedSet.Add(GetAddress(position));
+					Close(position);
 				}
 			}
+		}
+		
+		private static int GetManhattanDistance(Vector2 a, Vector2 b) {
+			return (int) Mathf.Abs(a.x - b.x) + (int) Mathf.Abs(a.y - b.y);
+		}
+		private bool Close(Node n) {
+			return Close(n.Position);
+		}
+		private bool Close(Vector3 position) {
+			int id = GridAux.PositionToId(position);
+			return _closedSet.Add(id);
 		}
 	}
 }
