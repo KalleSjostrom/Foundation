@@ -23,14 +23,11 @@ namespace Foundation {
 	
 			_animator = gameObject.GetComponent<Animator>();
 	
-			_player = Player.CreatePlayer();
 			_animator.Play("FadeIn");
 		}
 	
 		public void NextScene() {
-			_player.Level = _player.Level + 1;
-			NextScene(_player.Level);
-			_player.Save();
+			NextScene(1);
 		}
 		public void NextScene(int nextLevel) 
 		{
