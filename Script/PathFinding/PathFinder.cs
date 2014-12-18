@@ -112,8 +112,8 @@ namespace Foundation {
 	
 			if (!_closedSet.Contains(address))
 			{
-				BaseTile t = _gridTiles.TryGetTile(position) as BaseTile;
-				if (t != null && unit.CanWalkOn(t)) 
+				BaseTile t = _gridTiles.TryGetTile(position);
+				if (t != null && unit.CanWalkPast(t)) 
 				{
 					int cost = (parent == null ? 0 : parent.Cost) + t.GetCost(unit);
 					int heuristic = GetManhattanDistance(position, target);
