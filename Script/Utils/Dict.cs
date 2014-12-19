@@ -50,8 +50,21 @@ namespace Foundation {
 			}
 		}
 		public void OnAfterDeserialize() {
+#if DEBUG_DICT
+			if (_keys.Count != _values.Count) {
+				Debug.Log("Keys:");
+				foreach (TKey k in _keys)
+					Debug.Log(k);
+					
+				Debug.Log("Vals:");
+				foreach (TValue v in _values)
+					Debug.Log(v);
+			}
+#endif
+			Log.Assert(_keys.Count == _values.Count, "Dictionary tried to deserialize but nr keys do no longer match nr values! (nr_keys={0}, nr_values={1})", _keys.Count, _values.Count);
+			
 			_dictionary.Clear();
-			for (int i=0; i!= Math.Min(_keys.Count,_values.Count); i++)
+			for (int i=0; i!= Math.Min(_keys.Count, _values.Count); i++)
 				_dictionary.Add(_keys[i],_values[i]);
 		}
 	}
